@@ -1,0 +1,16 @@
+{
+  "name": "aws-cli-security-group-edit",
+  "version": "0.0.1",
+  "description": "Add and edit Security Group Rules",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "James McDonald <james@toggen.com.au>",
+  "license": "GPL-2.0-only",
+  "dependencies": {
+    "is-ip": "^3.1.0",
+    "jspath": "^0.4.0"
+  }
+}
