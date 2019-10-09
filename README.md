@@ -73,4 +73,5 @@ npm run start
 
 ![Example output](img/example_output.png)
 
+Note in this image the `descriptionPrefix` has been set to SGEDIT when the script runs it will look for that in the description so it know what it can delete
 ![Example inbound rules](img/aws_inbound_rules.png)
