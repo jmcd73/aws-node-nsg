@@ -1,4 +1,4 @@
-# Add and Delete Security Group Rules
+# Add and Delete AWS Security Group Rules
 
 ## Overview
 This is a node app that checks your local IPv4 and 6 external internet addresses and creates an inbound allow rule in a Amazon Web Services Security Group
