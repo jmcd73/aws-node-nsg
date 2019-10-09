@@ -1,4 +1,3 @@
-
 const settings = {
   rulesToAdd: [
     {
@@ -12,11 +11,17 @@ const settings = {
       fromPort: 8999,
       toPort: 8999,
       suffix: "POSTGRES"
+    },
+    {
+      protocol: "tcp",
+      fromPort: 9999,
+      toPort: 9999,
+      suffix: "SECRETPORT"
     }
- ],
- securityGroupName: "YourSGName",
- ipCheckUrl: "https://toggen.com.au/ip_check.php",
- descriptionPrefix: "SGEDIT"
+  ],
+  securityGroupName: "sgWebTest01",
+  ipCheckUrl: "https://toggen.com.au/ip_check.php",
+  descriptionPrefix: "SGEDIT"
 };
 
 module.exports = settings;

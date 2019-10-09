@@ -4,8 +4,8 @@
   "description": "Add and edit Security Group Rules",
   "main": "main.js",
   "repository": {
-  "type" : "git",
-  "url" : "https://github.com/jmcd73/aws-node-nsg.git"
+    "type": "git",
+    "url": "https://github.com/jmcd73/aws-node-nsg.git"
   },
   "scripts": {
     "start": "node main.js",

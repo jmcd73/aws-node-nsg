@@ -72,3 +72,5 @@ npm run start
 ```
 
 ![Example output](img/example_output.png)
+
+![Example inbound rules](img/aws_inbound_rules.png)
