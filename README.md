@@ -75,3 +75,8 @@ npm run start
 
 Note in this image the `descriptionPrefix` has been set to SGEDIT when the script runs it will look for that in the description so it knows what it can delete and what it should leave untouched
 ![Example inbound rules](img/aws_inbound_rules.png)
+
+## What is missing
+Currently it will keep track of rules in the settings.js but if you remove the rule it won't go in and delete that rule.
+
+Todo: add a function to remove rules that have the descriptionPrefix but no corresponding rule in the settings.js
