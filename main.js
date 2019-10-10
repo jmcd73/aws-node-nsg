@@ -37,6 +37,7 @@ const rulesToRevoke = getMatchingRulesNotInSettings(
   allMatchingRules
 );
 
+
 if (rulesToRevoke.length > 0) {
   console.log(
     `Revoking rules tagged with ${descriptionPrefix} that are no longer in rule set`

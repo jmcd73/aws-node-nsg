@@ -1,14 +1,16 @@
 # Add and Delete AWS Security Group Rules
 
 ## Overview
-This is a node app that checks your local IPv4 and 6 external internet addresses and creates an inbound allow rule in a Amazon Web Services Security Group
+This is a node app that checks your local IPv4 and 6 external internet addresses and creates an inbound allow rule tagged with a description of your choosing in a Amazon Web Services Security Group
 
 I use this to provide quick SSH access to EC2 instances from whichever site I'm currently at without logging into the AWS console and manually adding rules
 
 ## What it does
-Firstly it will connect to a PHP script located at `ipCheckUrl`. When it connects to this endpoint it will make a request over both IPv4 and IPv6 to find your IP Addresses
+Firstly it connects to your AWS Account and downloads the Security Group
 
-It then connects to your AWS Account and downloads the Security Group
+Secondly it compares your current ingress rules that have a description that starts with the descriptionPrefix set in settings.js with the rules specified in settings.js and revokes any rules that are no longer specified in settings.js
+
+Then it will connect to a PHP script located at `ipCheckUrl`. When it connects to this endpoint it will make a request over both IPv4 and IPv6 to find your IP Addresses
 
 It checks the inbound Security Group rules to see if a rule exists for the Protocol, IP and Port configuration as set in the `settings.js` file. It also must have a description that starts with the descriptionPrefix you configure in `settings.js`.
 

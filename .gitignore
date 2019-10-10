@@ -3,7 +3,6 @@ node_modules/
 getRulesFromPrefix.js
 old-stuff.js
 securityGroup.js
-cli-examples/example-commands.sh
-cli-examples/sg-edit-TempScript.sh
-cli-examples/sg-edit-FromJSON.sh
+test.js
+cli-examples/
 package-lock.json

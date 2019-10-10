@@ -14,9 +14,9 @@ const settings = {
       suffix: "POSTGRES"
     }
  ],
- securityGroupName: "securitygrouptest01", //sgWebTest01, securitygrouptest01
- ipCheckUrl: "https://example.com/ip_check.php",
- descriptionPrefix: "SGTAG"
+ securityGroupName: "sgWeb01", //sgWebTest01, sgWeb01
+ ipCheckUrl: "https://toggen.com.au/ip_check.php",
+ descriptionPrefix: "SGEDIT"
 };
 
 module.exports = settings;

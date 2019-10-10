@@ -113,9 +113,7 @@ const isDuplicate = (
     protocol +
     '"}.' +
     ipRangeName +
-    '{.Description ^== "' +
-    descriptionPrefix +
-    '" && .' +
+    '{.' +
     cidrIpName +
     ' === "' +
     cidr +
@@ -249,6 +247,7 @@ const addRule = (
 };
 
 const revokeRule = (securityGroupName, ipRule) => {
+  console.log(ipRule)
   execFile(
     "aws",
     [
@@ -295,8 +294,7 @@ const deleteOldRules = (
     console.log("Deleting " + message.join(" "));
     oldRules.map(value => {
       const ipRule = buildRule(protocol, fromPort, toPort, value);
-
-      revokeRule(ipRule);
+      revokeRule(securityGroupName, ipRule);
     });
   } else {
     console.log("No old rules to delete");
