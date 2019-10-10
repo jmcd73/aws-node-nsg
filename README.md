@@ -6,9 +6,9 @@ This is a node app that checks your local IPv4 and 6 external internet addresses
 I use this to provide quick SSH access to EC2 instances from whichever site I'm currently at without logging into the AWS console and manually adding rules
 
 ## What it does
-Firstly it connects to your AWS Account and downloads the Security Group
+Firstly it connects to your AWS Account and downloads the Security Group JSON
 
-Secondly it compares your current ingress rules that have a description that starts with the descriptionPrefix set in settings.js with the rules specified in settings.js and revokes any rules that are no longer specified in settings.js
+Secondly it compares your current ingress rules that have a description that starts with the `descriptionPrefix` as set in settings.js with the rules specified in settings.js and revokes any rules that are no longer specified in settings.js
 
 Then it will connect to a PHP script located at `ipCheckUrl`. When it connects to this endpoint it will make a request over both IPv4 and IPv6 to find your IP Addresses
 
@@ -24,6 +24,11 @@ If it finds a rule that matches the Protocol and Port and begins with the `descr
 **Note:** I have developed this on a macbook. It should work on Linux without too much trouble but may need massaging to run on Windows
 
 Install aws cli and authenticate with your AWS account with enough permissions to edit Security Groups
+
+```
+aws configure --profile yourprofilename
+# add key and secret key
+```
 
 Clone the repo
 
@@ -67,8 +72,9 @@ const settings = {
  descriptionPrefix: "SGTAG"
 };
 ```
+Rules will be added with a description of `${descriptionPrefix} ${settings.rulesToAdd[x]suffix}` e.g. "SGTAG SSH"
 
-Run every time you find that can't connect to your EC2 instance from your computer
+Run every time you find that you can't connect to your EC2 instance from your computer
 ```
 npm run start
 # for testing uses settings-test.js instead of settings.js
@@ -77,10 +83,5 @@ npm run testing
 
 ![Example output](img/example_output.png)
 
-Note in this image the `descriptionPrefix` has been set to SGTAG when the script runs it will look for that in the description so it knows what it can delete and what it should leave untouched
+Note in this image the `descriptionPrefix` has been set to SGEDIT when the script runs it will look for that in the beginning of the description so it knows what it can delete and what it should leave untouched
 ![Example inbound rules](img/aws_inbound_rules.png)
-
-## What is missing
-Currently it will keep track of rules in the settings.js but if you remove the rule it won't go in and delete that rule.
-
-Todo: add a function to remove rules that have the descriptionPrefix but no corresponding rule in the settings.js
