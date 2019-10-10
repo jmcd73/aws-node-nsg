@@ -1,4 +1,9 @@
 runthis.sh
 node_modules/
-cli-examples/
+getRulesFromPrefix.js
+old-stuff.js
+securityGroup.js
+cli-examples/example-commands.sh
+cli-examples/sg-edit-TempScript.sh
+cli-examples/sg-edit-FromJSON.sh
 package-lock.json

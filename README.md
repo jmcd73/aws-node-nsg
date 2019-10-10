@@ -62,18 +62,20 @@ const settings = {
  ],
  securityGroupName: "YourSGName",
  ipCheckUrl: "https://<your server>/ip_check.php",
- descriptionPrefix: "NSGEDIT"
+ descriptionPrefix: "SGTAG"
 };
 ```
 
 Run every time you find that can't connect to your EC2 instance from your computer
 ```
 npm run start
+# for testing uses settings-test.js instead of settings.js
+npm run testing
 ```
 
 ![Example output](img/example_output.png)
 
-Note in this image the `descriptionPrefix` has been set to SGEDIT when the script runs it will look for that in the description so it knows what it can delete and what it should leave untouched
+Note in this image the `descriptionPrefix` has been set to SGTAG when the script runs it will look for that in the description so it knows what it can delete and what it should leave untouched
 ![Example inbound rules](img/aws_inbound_rules.png)
 
 ## What is missing

@@ -4,9 +4,14 @@ const isIp = require("is-ip");
 const jspath = require("jspath");
 
 const getIPAddress = require("./http");
-const settings = require('./settings');
+const settings = require("./settings");
 
-const { securityGroupName, rulesToAdd, ipCheckUrl, descriptionPrefix } = settings
+const {
+  securityGroupName,
+  rulesToAdd,
+  ipCheckUrl,
+  descriptionPrefix
+} = settings;
 
 const getSecurityGroup = sgName => {
   const securityGroup = execFileSync("aws", [
@@ -17,20 +22,77 @@ const getSecurityGroup = sgName => {
   ]);
   return JSON.parse(securityGroup.toString("utf8"));
 };
+
+const getAllRulesMatchingDescriptionPrefix = (
+  securityGroupJSON,
+  descriptionPrefix
+) => {
+  const patterns = [
+    `.SecurityGroups.IpPermissions{..Description ^== "${descriptionPrefix}"}`
+  ];
+
+  const ipPermissions = patterns.reduce((accum, current) => {
+    return accum.concat(jspath.apply(current, securityGroupJSON));
+  }, []);
+
+  const filterPattern = [
+    {
+      pattern: `.IpRanges{.Description ^== "${descriptionPrefix}"}`,
+      slug: "IpRanges"
+    },
+    {
+      pattern: `.Ipv6Ranges{.Description ^== "${descriptionPrefix}"}`,
+      slug: "Ipv6Ranges"
+    }
+  ];
+  const allMatchingRules = ipPermissions.map(obj => {
+    let newObj = { ...obj };
+
+    const specificRanges = filterPattern.map(filterObject => {
+      newObj = {
+        ...newObj,
+        [filterObject.slug]: jspath.apply(filterObject.pattern, obj)
+      };
+    }, []);
+    return newObj;
+  });
+
+  return allMatchingRules;
+};
+
+const getMatchingRulesNotInSettings = (rulesToCheck, matchingRules) => {
+  const rulesNotInSG = matchingRules.filter(obj => {
+    const { FromPort, ToPort, IpProtocol } = obj;
+    return (
+      rulesToCheck.filter(rules => {
+        const { protocol, fromPort: fromP, toPort: toP } = rules;
+        return protocol === IpProtocol && fromP === FromPort && toP === ToPort;
+      }).length === 0
+    );
+  }).map( val => {
+    delete val.PrefixListIds;
+    delete val.UserIdGroupPairs;
+    return val
+  });
+
+  return rulesNotInSG
+};
+
 /**
  *
  * @param {string} cidr
  */
 const getPropertyNamesForIPVersion = cidr => {
-
   let ipRangeName = "IpRanges";
   let cidrIpName = "CidrIp";
   if (isIp.v6(cidr.split("/")[0])) {
     ipRangeName = "Ipv6Ranges";
     cidrIpName = "CidrIpv6";
   }
-
-  return { ipRangeName, cidrIpName };
+  return {
+    ipRangeName,
+    cidrIpName
+  };
 };
 const isDuplicate = (
   protocol,
@@ -40,7 +102,6 @@ const isDuplicate = (
   descriptionPrefix,
   sgJSON
 ) => {
-
   const { ipRangeName, cidrIpName } = getPropertyNamesForIPVersion(cidr);
 
   const pattern =
@@ -95,19 +156,25 @@ const getOldRules = (
   return jspath.apply(pattern, sgJSON);
 };
 
-const buildRule = (protocol, fromPort, toPort, cidr, description) => {
+const buildRule = (protocol, fromPort, toPort, cidr, description = "") => {
   const { ipRangeName, cidrIpName } = getPropertyNamesForIPVersion(cidr);
-
-  return {
+  // JSON format for this is the output of
+  // aws ec2 revoke-security-group-ingress --generate-cli-skeleton
+  const ipRuleJSON = {
     IpPermissions: [
       {
         IpProtocol: protocol,
         FromPort: fromPort,
         ToPort: toPort,
-        [ipRangeName]: [{ [cidrIpName]: cidr, Description: description }]
+        [ipRangeName]: [{ [cidrIpName]: cidr }]
       }
     ]
   };
+  if (description) {
+    ipRuleJSON.IpPermissions[0][ipRangeName][0].Description = description;
+  }
+
+  return JSON.stringify(ipRuleJSON);
 };
 
 const runAddRule = (ipRange, securityGroupName) => {
@@ -119,7 +186,7 @@ const runAddRule = (ipRange, securityGroupName) => {
       "--group-name",
       securityGroupName,
       "--cli-input-json",
-      JSON.stringify(ipRange)
+      ipRange
     ],
     { shell: false },
     (error, stdout, stderr) => {
@@ -166,6 +233,7 @@ const addRule = (
       "Adding Rule... " +
         [cidr, fromPort + "-" + toPort, protocol, securityGroupName].join(" ")
     );
+
     runAddRule(ruleJSON, securityGroupName);
   }
 
@@ -180,6 +248,28 @@ const addRule = (
   );
 };
 
+const revokeRule = (securityGroupName, ipRule) => {
+  execFile(
+    "aws",
+    [
+      "ec2",
+      "revoke-security-group-ingress",
+      "--group-name",
+      securityGroupName,
+      "--cli-input-json",
+      ipRule
+    ],
+    { shell: false },
+    (error, stdout, stderr) => {
+      if (error) {
+        throw error;
+      }
+      console.log("STDOUT", stdout);
+      console.log("STDERR", stderr);
+    }
+  );
+};
+
 const deleteOldRules = (
   securityGroupName,
   protocol,
@@ -187,7 +277,7 @@ const deleteOldRules = (
   toPort,
   cidr,
   descriptionPrefix,
-  jsonSG
+  securityGroupJSON
 ) => {
   const oldRules = getOldRules(
     protocol,
@@ -195,43 +285,23 @@ const deleteOldRules = (
     toPort,
     cidr,
     descriptionPrefix,
-    jsonSG
+    securityGroupJSON
   );
   //aws ec2 revoke-security-group-ingress --group-name WebDMZ --protocol tcp --port 22 --cidr 101.161.76.223/32
+
   if (oldRules.length > 0) {
     const message = [oldRules.join(","), protocol, fromPort + "-" + toPort];
+
     console.log("Deleting " + message.join(" "));
     oldRules.map(value => {
-      execFile(
-        "aws",
-        [
-          "ec2",
-          "revoke-security-group-ingress",
-          "--group-name",
-          securityGroupName,
-          "--protocol",
-          protocol,
-          "--port",
-          fromPort + "-" + toPort,
-          "--cidr",
-          value
-        ],
-        { shell: false },
-        (error, stdout, stderr) => {
-          if (error) {
-            throw error;
-          }
-          console.log("STDOUT", stdout);
-          console.log("STDERR", stderr);
-        }
-      );
+      const ipRule = buildRule(protocol, fromPort, toPort, value);
+
+      revokeRule(ipRule);
     });
   } else {
     console.log("No old rules to delete");
   }
 };
-
-const jsonSG = getSecurityGroup(securityGroupName);
 
 const createCidrsFromIps = (ipAddresses = []) => {
   return ipAddresses.map(value => {
@@ -257,35 +327,13 @@ const createRulesObject = (cidrs, rulesToAdd) => {
   return newRules;
 };
 
-/* run two check one for IPv4 address and they other for IPv6 */
-Promise.all([
-  getIPAddress(ipCheckUrl, 4),
-  getIPAddress(ipCheckUrl, 6)
-])
-  .then(data => {
-
-    const cidrs = createCidrsFromIps(data).filter( x => x );
-
-    console.log("Our external CIDR IPs are:\n", cidrs.join(' & '));
-
-    const newRules = createRulesObject(cidrs, rulesToAdd);
-
-    newRules.forEach(obj => {
-      addRule(
-        securityGroupName,
-        obj.protocol,
-        obj.fromPort,
-        obj.toPort,
-        obj.cidr,
-        descriptionPrefix + " " + obj.suffix,
-        jsonSG
-      );
-    });
-  })
-
-  .catch(e => {
-    console.log(e);
-  });
-
-//addRule(securityGroupName,'tcp', 22, 22, ip, descriptionPrefix + ' SSH', jsonSG);
-//addRule(securityGroupName, 'tcp', 5434, 5434, ip, descriptionPrefix + ' POSTGRES', jsonSG);
+module.exports = {
+  createCidrsFromIps,
+  createRulesObject,
+  rulesToAdd,
+  addRule,
+  getSecurityGroup,
+  getAllRulesMatchingDescriptionPrefix,
+  getMatchingRulesNotInSettings,
+  revokeRule
+};
