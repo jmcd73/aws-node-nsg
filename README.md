@@ -25,14 +25,14 @@ If it finds a rule that matches the Protocol and Port and begins with the `descr
 
 Install aws cli and authenticate with your AWS account with enough permissions to edit Security Groups
 
-```
+```sh
 aws configure --profile yourprofilename
 # add key and secret key
 ```
 
 Clone the repo
 
-```
+```sh
 git clone https://github.com/jmcd73/aws-node-nsg.git aws-node-nsg
 cd aws-node-nsg
 npm install
@@ -40,13 +40,15 @@ npm install
 
 Copy the ip_check.php script to a PHP enabled webserver on the internet. Use curl to test it is working
 
-```
+```sh
 # should output an IPv4 address
 curl -4 https://example.com/ip_check.php
 
 # should output an IPv6 address
 curl -6 https://example.com/ip_check.php
 ```
+**Note** curl -6 requires that it can resolve the host name to an IPv6 address. If you don't have a AAAA record `curl -6 https://example.com/ip_check.php` will return an IPv4 address
+
 
 edit settings.js and add the URL of where you copied the `ip_check.php` script, the security group name and rules for the ports you want to open e.g.
 
@@ -75,7 +77,7 @@ const settings = {
 Rules will be added with a description of `${descriptionPrefix} ${settings.rulesToAdd[x]suffix}` e.g. "SGTAG SSH"
 
 Run every time you find that you can't connect to your EC2 instance from your computer
-```
+```sh
 npm run start
 # for testing uses settings-test.js instead of settings.js
 npm run testing
